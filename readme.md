@@ -69,13 +69,23 @@ IAM         | main.tf, vars.tf, outputs.tf    | Defines the EC2 Role, Instance P
 EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.
 DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.
 
+
 +----------------+---------------------------+--------------------+-------------------------------------------+
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
 +----------------+---------------------------+--------------------+-------------------------------------------+
-| VPC            | vpc_id                    | EC2                | Attaches Security Groups to the VPC.      |
+| VPC            | vpc_id                    | EC2 & RDS          | Attaches Security Groups to the VPC.      |
++----------------+---------------------------+--------------------+-------------------------------------------+
 | VPC            | public_subnet_ids         | EC2                | Deploys instances into public subnets.    |
-| DynamoDB       | dynamodb_arn              | IAM                | Grants access to the specific Book table. |
-| IAM            | ec2_instance_profile_name | EC2                | Attaches IAM Role to the EC2 instances.   |
++----------------+---------------------------+--------------------+-------------------------------------------+
+| VPC            | private_subnet_ids        | RDS                | Isolates the database in private subnets. |
++----------------+---------------------------+--------------------+-------------------------------------------+
+| DynamoDB       | dynamodb_arn              | IAM                | Grants access to the Book table.          |
++----------------+---------------------------+--------------------+-------------------------------------------+
+| RDS            | db_secret_arn             | IAM                | Allows EC2 to read the DB password.       |
++----------------+---------------------------+--------------------+-------------------------------------------+
+| EC2            | ec2_sgp_id                | RDS                | Allows DB inbound traffic from Web tier.  |
++----------------+---------------------------+--------------------+-------------------------------------------+
+| IAM            | ec2_instance_profile_name | EC2                | Attaches Identity/Perms to the instance.  |
 +----------------+---------------------------+--------------------+-------------------------------------------+
 
 The "Baton Pass" (Cross-Module Dependency)
@@ -90,28 +100,34 @@ State Locking: Prevents state corruption by using DynamoDB to lock the state fil
 
 Database Reference:
 
-dynamo:
+dynamo: -----------------------------------------------------------------------------------------------------
 Table Name: ${prefix}-bookinventory
 Primary Key: ISBN (Partition) / Genre (Sort)
 Billing: On-Demand (PAY_PER_REQUEST)
 
-rds:
+rds: --------------------------------------------------------------------------------------------------------
 Database Layer: 1x PostgreSQL instance running in a Private Subnet. The Subnet Group spans 2 Availability Zones to allow for future failover/redundancy.
 
 rds port need not to be open cos ec2 sgp is allow as the inbound
 
 How to understand the "rds data Flow"
-- Terraform runs and creates a random string.
-- RDS is created using that string as its master password.
-- Secrets Manager stores that string (and the DB host address) so you don't have to remember it.
-- EC2 (using the IAM role we built) asks Secrets Manager for that value when you run your connection script.
+Terraform runs and creates a random string.
+RDS is created using that string as its master password.
+Secrets Manager stores that string (and the DB host address) so you don't have to remember it.
+EC2 (using the IAM role we built) asks Secrets Manager for that value when you run your connection script.
 
-Troubleshooting:
+VPC to RDS: Added private_subnet_ids. This is a critical distinction from the EC2 flow.
+
+RDS to IAM: Added the db_secret_arn pass. Without this "baton," your IAM policy would be too broad (security risk) or wouldn't work at all.
+
+EC2 to RDS: Added the Security Group pass. This is what allows your RDS to say, "I don't care if the port is 5432, I only talk to my friend the EC2."
+
+Troubleshooting: ----------------------------------------------------------------------------------------------
 EC2 can't reach Internet? Check the VPC module's Route Table for the 0.0.0.0/0 route to the IGW. SGP also must allow inbound/ outbound (to download/fetch installer)
 Access Denied on S3/DynamoDB? Ensure the dynamodb_arn variable in the IAM module is not empty.
 
 
-test:
+test: ---------------------------------------------------------------------------------------------------------
 
 --- access to ec2 stuffs
 aws ec2 describe-instances
@@ -132,25 +148,25 @@ aws dynamodb delete-table --table-name fluffy-uat-ju-bookinventory #no permissio
 
 SSH'd into your EC2, run this single block. It fetches the secret, extracts the password, and logs you into the database in one go:
 
-# 1. Install the tools we need
+Install the tools we need
 sudo apt update && sudo apt install -y postgresql-client jq
 
-# 2. Fetch secret, parse it, and connect
+Fetch secret, parse it, and connect
 export DB_JSON=$(aws secretsmanager get-secret-value --secret-id fluffy-uat-db-password-ju --region ap-southeast-1 --query 'SecretString' --output text)
 
-# 3. Extract pieces using jq
+Extract pieces using jq
 DB_PASS=$(echo $DB_JSON | jq -r .password)
 DB_HOST=$(echo $DB_JSON | jq -r .host)
 DB_USER=$(echo $DB_JSON | jq -r .username)
 
-# 4. Connect! (It will ask for the password, which you now have in $DB_PASS)
+Connect! (It will ask for the password, which you now have in $DB_PASS)
 PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d bookdb
-2. What is jq doing?
+What is jq doing?
 jq -r .password: The -r stands for "raw." It strips away the quotation marks around the password so the database client can read it as a pure string.
 
 .password: This tells jq to look specifically for the key named "password" inside that JSON object.
 
-3. Why this is the "Right" Way
+Why this is the "Right" Way
 No Clipboard Leaks: You never have to copy the password to your computer's clipboard, which is a common way passwords get stolen.
 
 Speed: If you destroy and recreate your RDS (which changes the endpoint URL and password), this script still works without you changing a single line. It always finds the latest "truth" from Secrets Manager.
@@ -158,7 +174,8 @@ Speed: If you destroy and recreate your RDS (which changes the endpoint URL and 
 
 FOLLOW UP:
 
-1. resource secretmanager that is define module/rds/secret.tf can be sepreated as module/secret/main.tf
+1. 
+resource secretmanager that is define module/rds/secret.tf can be sepreated as module/secret/main.tf
 
 2.
 │ Error: creating RDS DB Instance (fluffy-uat-db-pgres-ju): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 29b67683-18bf-46fa-93ea-405e2ab1cbd0, api error InvalidParameterCombination: Cannot find version 16.1 for postgres
