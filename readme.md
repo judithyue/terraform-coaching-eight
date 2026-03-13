@@ -69,6 +69,7 @@ IAM         | main.tf, vars.tf, outputs.tf    | Defines the EC2 Role, Instance P
 EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.
 DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.
 
+---------
 
 +----------------+---------------------------+--------------------+-------------------------------------------+
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
@@ -100,12 +101,12 @@ State Locking: Prevents state corruption by using DynamoDB to lock the state fil
 
 Database Reference:
 
-dynamo: -----------------------------------------------------------------------------------------------------
+dynamo: -----------
 Table Name: ${prefix}-bookinventory
 Primary Key: ISBN (Partition) / Genre (Sort)
 Billing: On-Demand (PAY_PER_REQUEST)
 
-rds: --------------------------------------------------------------------------------------------------------
+rds: ----------------
 Database Layer: 1x PostgreSQL instance running in a Private Subnet. The Subnet Group spans 2 Availability Zones to allow for future failover/redundancy.
 
 rds port need not to be open cos ec2 sgp is allow as the inbound
@@ -122,7 +123,7 @@ RDS to IAM: Added the db_secret_arn pass. Without this "baton," your IAM policy 
 
 EC2 to RDS: Added the Security Group pass. This is what allows your RDS to say, "I don't care if the port is 5432, I only talk to my friend the EC2."
 
-Troubleshooting: ----------------------------------------------------------------------------------------------
+Troubleshooting: ----------
 EC2 can't reach Internet? Check the VPC module's Route Table for the 0.0.0.0/0 route to the IGW. SGP also must allow inbound/ outbound (to download/fetch installer)
 Access Denied on S3/DynamoDB? Ensure the dynamodb_arn variable in the IAM module is not empty.
 
