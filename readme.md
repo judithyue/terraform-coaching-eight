@@ -70,7 +70,7 @@ Root Configuration
 |EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.                |
 |DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.                           |
 
-
+|-------------------------------------------------------------------------------------------------------------|
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
 |-------------------------------------------------------------------------------------------------------------|
 | VPC            | vpc_id                    | EC2 & RDS          | Attaches Security Groups to the VPC.      |
