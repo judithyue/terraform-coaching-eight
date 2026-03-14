@@ -62,16 +62,13 @@ Root Configuration
 - vars/uat.tfvars: Specific values for the UAT environment.
 - backend-config/uat.config: S3 bucket and DynamoDB locking settings for Remote State.
 
-+-----------------------------------------------------------------------------------------------------------------+
+
 |Module      | Files Included                  | Responsibility                                                   |
 |------------|---------------------------------|------------------------------------------------------------------|   
 |VPC         | main.tf, vars.tf, outputs.tf    | Creates the IGW, Public Subnets, and Route Tables.               |
 |IAM         | main.tf, vars.tf, outputs.tf    | Defines the EC2 Role, Instance Profile, and S3/DynamoDB policies.|
 |EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.                |
 |DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.                           |
-+-----------------------------------------------------------------------------------------------------------------+
-
----------
 
 +----------------+---------------------------+--------------------+-------------------------------------------+
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
