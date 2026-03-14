@@ -70,23 +70,16 @@ Root Configuration
 |EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.                |
 |DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.                           |
 
-+----------------+---------------------------+--------------------+-------------------------------------------+
+
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
-+----------------+---------------------------+--------------------+-------------------------------------------+
+|----------------+---------------------------+--------------------+-------------------------------------------|
 | VPC            | vpc_id                    | EC2 & RDS          | Attaches Security Groups to the VPC.      |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 | VPC            | public_subnet_ids         | EC2                | Deploys instances into public subnets.    |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 | VPC            | private_subnet_ids        | RDS                | Isolates the database in private subnets. |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 | DynamoDB       | dynamodb_arn              | IAM                | Grants access to the Book table.          |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 | RDS            | db_secret_arn             | IAM                | Allows EC2 to read the DB password.       |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 | EC2            | ec2_sgp_id                | RDS                | Allows DB inbound traffic from Web tier.  |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 | IAM            | ec2_instance_profile_name | EC2                | Attaches Identity/Perms to the instance.  |
-+----------------+---------------------------+--------------------+-------------------------------------------+
 
 The "Baton Pass" (Cross-Module Dependency)
 Understanding how the modules talk to each other is key to troubleshooting:
