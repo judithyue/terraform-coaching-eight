@@ -64,15 +64,15 @@ Root Configuration
 
 
 |Module      | Files Included                  | Responsibility                                                   |
-|------------|---------------------------------|------------------------------------------------------------------|   
+|------|------|--------| 
 |VPC         | main.tf, vars.tf, outputs.tf    | Creates the IGW, Public Subnets, and Route Tables.               |
 |IAM         | main.tf, vars.tf, outputs.tf    | Defines the EC2 Role, Instance Profile, and S3/DynamoDB policies.|
 |EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.                |
 |DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.                           |
 
-|-------------------------------------------------------------------------------------------------------------|
+
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
-|-------------------------------------------------------------------------------------------------------------|
+|------|-------|--------|----------|
 | VPC            | vpc_id                    | EC2 & RDS          | Attaches Security Groups to the VPC.      |
 | VPC            | public_subnet_ids         | EC2                | Deploys instances into public subnets.    |
 | VPC            | private_subnet_ids        | RDS                | Isolates the database in private subnets. |
