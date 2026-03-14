@@ -42,7 +42,6 @@ You don't just run terraform init. You tell it which backend config to use:
 terraform init -backend-config=backend-config/uat.conf
 
 2. How to Plan/Apply (Using your Vars)
-You tell Terraform which "flavor" of variables to use:
 
 terraform plan -var-file=vars/uat.tfvars
 terraform apply -auto-approve -var-file=vars/uat.tfvars
