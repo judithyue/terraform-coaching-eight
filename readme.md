@@ -1,7 +1,8 @@
 This repository manages the automated deployment of the Fluffy application environment using Terraform modules. 
 It includes a secure VPC, IAM roles with least-privilege access, EC2 compute instances, and a DynamoDB book inventory.
 
-...bash
+...
+   bash
 .
 ├── main.tf              # Entry point: Connects all modules
 ├── locals.tf            # Common naming and tagging logic
