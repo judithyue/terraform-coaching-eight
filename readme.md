@@ -93,12 +93,12 @@ State Locking: Prevents state corruption by using DynamoDB to lock the state fil
 
 Database Reference:
 
-dynamo: -----------
+dynamo:
 Table Name: ${prefix}-bookinventory
 Primary Key: ISBN (Partition) / Genre (Sort)
 Billing: On-Demand (PAY_PER_REQUEST)
 
-rds: ----------------
+rds:
 Database Layer: 1x PostgreSQL instance running in a Private Subnet. The Subnet Group spans 2 Availability Zones to allow for future failover/redundancy.
 
 rds port need not to be open cos ec2 sgp is allow as the inbound
@@ -115,14 +115,14 @@ RDS to IAM: Added the db_secret_arn pass. Without this "baton," your IAM policy 
 
 EC2 to RDS: Added the Security Group pass. This is what allows your RDS to say, "I don't care if the port is 5432, I only talk to my friend the EC2."
 
-Troubleshooting: ----------
+Troubleshooting:
 EC2 can't reach Internet? Check the VPC module's Route Table for the 0.0.0.0/0 route to the IGW. SGP also must allow inbound/ outbound (to download/fetch installer)
 Access Denied on S3/DynamoDB? Ensure the dynamodb_arn variable in the IAM module is not empty.
 
 
-test: ---------------------------------------------------------------------------------------------------------
+test:
 
---- access to ec2 stuffs
+access to ec2 stuffs:
 aws ec2 describe-instances
 aws s3 ls                   # this will fail because this command is equivalent to have the s3:ListAllBucket, Not s3:ListBucket
 aws s3api create-bucket \   # best practice, terraform should create bucket, no perm given to ec2
@@ -130,14 +130,14 @@ aws s3api create-bucket \   # best practice, terraform should create bucket, no 
    --region yourRegion -- \
    create-bucket-configuration LocationConstraint=yourRegion
 
--- access to dynamo
+access to dynamo:
 aws dynamodb list-tables   # will not work cos the permission is scope to read ju-bookinventory
 aws dynamodb scan --table-name fluffy-uat-ju-bookinventory  #ok 
 aws dynamodb delete-table --table-name fluffy-uat-ju-bookinventory #no permission
 
---- access to rds
---- once ec2 instance connect, ec2 must be able to fetch secret value 
---- login to the postgres
+access to rds
+once ec2 instance connect, ec2 must be able to fetch secret value 
+login to the postgres
 
 SSH'd into your EC2, run this single block. It fetches the secret, extracts the password, and logs you into the database in one go:
 
@@ -169,10 +169,3 @@ FOLLOW UP:
 
 *
 resource secretmanager that is define module/rds/secret.tf can be sepreated as module/secret/main.tf
-
-*
-│ Error: creating RDS DB Instance (fluffy-uat-db-pgres-ju): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 29b67683-18bf-46fa-93ea-405e2ab1cbd0, api error InvalidParameterCombination: Cannot find version 16.1 for postgres
-│
-│   with module.rds.aws_db_instance.postgres,
-│   on modules/rds/main.tf line 28, in resource "aws_db_instance" "postgres":
-│   28: resource "aws_db_instance" "postgres"
