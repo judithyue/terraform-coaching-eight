@@ -62,12 +62,14 @@ Root Configuration
 - vars/uat.tfvars: Specific values for the UAT environment.
 - backend-config/uat.config: S3 bucket and DynamoDB locking settings for Remote State.
 
-Module      | Files Included                  | Responsibility
-------------|---------------------------------|--------------------------------------------------
-VPC         | main.tf, vars.tf, outputs.tf    | Creates the IGW, Public Subnets, and Route Tables.
-IAM         | main.tf, vars.tf, outputs.tf    | Defines the EC2 Role, Instance Profile, and S3/DynamoDB policies.
-EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.
-DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.
++-----------------------------------------------------------------------------------------------------------------+
+|Module      | Files Included                  | Responsibility                                                   |
+|------------|---------------------------------|------------------------------------------------------------------|   
+|VPC         | main.tf, vars.tf, outputs.tf    | Creates the IGW, Public Subnets, and Route Tables.               |
+|IAM         | main.tf, vars.tf, outputs.tf    | Defines the EC2 Role, Instance Profile, and S3/DynamoDB policies.|
+|EC2         | main.tf, vars.tf, ... data.tf   | Provisions Ubuntu instances and defines SG rules.                |
+|DynamoDB    | main.tf, vars.tf, outputs.tf    | Creates the NoSQL table and seed data.                           |
++-----------------------------------------------------------------------------------------------------------------+
 
 ---------
 
@@ -134,9 +136,9 @@ test: --------------------------------------------------------------------------
 aws ec2 describe-instances
 aws s3 ls                   # this will fail because this command is equivalent to have the s3:ListAllBucket, Not s3:ListBucket
 aws s3api create-bucket \   # best practice, terraform should create bucket, no perm given to ec2
-   --bucket <bucket-name> \
-   --region <region> -- \
-   create-bucket-configuration LocationConstraint=<region>
+   --bucket yourBucketName \
+   --region yourRegion -- \
+   create-bucket-configuration LocationConstraint=yourRegion
 
 -- access to dynamo
 aws dynamodb list-tables   # will not work cos the permission is scope to read ju-bookinventory
@@ -175,12 +177,12 @@ Speed: If you destroy and recreate your RDS (which changes the endpoint URL and 
 
 FOLLOW UP:
 
-1. 
+*
 resource secretmanager that is define module/rds/secret.tf can be sepreated as module/secret/main.tf
 
-2.
+*
 │ Error: creating RDS DB Instance (fluffy-uat-db-pgres-ju): operation error RDS: CreateDBInstance, https response error StatusCode: 400, RequestID: 29b67683-18bf-46fa-93ea-405e2ab1cbd0, api error InvalidParameterCombination: Cannot find version 16.1 for postgres
 │
 │   with module.rds.aws_db_instance.postgres,
 │   on modules/rds/main.tf line 28, in resource "aws_db_instance" "postgres":
-│   28: resource "aws_db_instance" "postgres" {
+│   28: resource "aws_db_instance" "postgres"
