@@ -119,7 +119,6 @@ Troubleshooting:
 EC2 can't reach Internet? Check the VPC module's Route Table for the 0.0.0.0/0 route to the IGW. SGP also must allow inbound/ outbound (to download/fetch installer)
 Access Denied on S3/DynamoDB? Ensure the dynamodb_arn variable in the IAM module is not empty.
 
-
 test:
 
 access to ec2 stuffs:
@@ -164,8 +163,97 @@ No Clipboard Leaks: You never have to copy the password to your computer's clipb
 
 Speed: If you destroy and recreate your RDS (which changes the endpoint URL and password), this script still works without you changing a single line. It always finds the latest "truth" from Secrets Manager.
 
+option 2 to test whether ec2 can fetch the password from secret mgr
+ec2 console
+fluffy-uat-db-password-ju (ur secret mgr)
+
+aws secretsmanager get-secret-value \
+    --secret-id fluffy-uat-db-password-ju \
+    --region ap-southeast-1
+
+note:
+Your IAM Role is missing the secretsmanager:GetSecretValue
+*
+If you have jq installed (which we discussed earlier), you can extract just the password string. 
+This proves you can parse the data for your app.
+
+Fetch and extract the password field specifically
+aws secretsmanager get-secret-value \
+    --secret-id fluffy-uat-db-password-ju  \
+    --region ap-southeast-1 \
+    --query 'SecretString' \
+    --output text | jq -r .password
+
+install postgressql-client   
+sudo apt update && sudo apt install -y postgresql-client jq
+
+Store the secret in a variable
+export DB_SECRET=$(aws secretsmanager get-secret-value --secret-id fluffy-uat-db-password-ju --region ap-southeast-1 --query 'SecretString' --output text)
+
+Extract the details
+DB_HOST=$(echo $DB_SECRET | jq -r .host)
+DB_USER=$(echo $DB_SECRET | jq -r .username)
+DB_PASS=$(echo $DB_SECRET | jq -r .password)
+
+Connect (PGPASSWORD allows you to skip the manual password prompt)
+PGPASSWORD=$DB_PASS psql -h $DB_HOST -U $DB_USER -d bookdb
 
 FOLLOW UP:
 
 *
 resource secretmanager that is define module/rds/secret.tf can be sepreated as module/secret/main.tf
+
+*
+learning
+
+list the polices that is attach to the role
+aws iam list-attached-role-policies --role-name fluffy-uat-ec2-iam-role
+
+```mermaid
+graph TB
+    subgraph AWS_Cloud ["AWS Cloud (ap-southeast-1)"]
+        
+        subgraph VPC ["VPC: 10.0.0.0/16"]
+            direction TB
+            
+            IGW["Internet Gateway"]
+            
+            subgraph Public_Tier ["Public Tier (Subnets)"]
+                EC2_SGP["EC2 Security Group<br/>(Allow Port 22)"]
+                WebApp["EC2: WebApp Server x2<br/>(Ubuntu Jammy)"]
+            end
+
+            subgraph Private_Tier ["Private Tier (Subnets)"]
+                RDS_SGP["RDS Security Group<br/>(Allow Port 5432 from EC2 SGP)"]
+                RDS_PG["RDS: PostgreSQL Instance<br/>(bookdb)"]
+                DB_Subnet_Group["DB Subnet Group<br/>(2x AZs)"]
+            end
+        end
+
+        subgraph Global_Services ["AWS Global/Account Services"]
+            DDB[("DynamoDB:<br/>book_inventory")]
+            SM["Secrets Manager:<br/>db_secret (Password)"]
+            IAM_Role["IAM Role: EC2-IAM-Role<br/>(Instance Profile)"]
+        end
+    end
+
+    %% Networking Connections
+    IGW <--> Public_Tier
+    WebApp --> RDS_PG
+    
+    %% IAM & Security Connections
+    IAM_Role -.->|Attached To| WebApp
+    EC2_SGP -.->|Inbound Source| RDS_SGP
+    
+    %% Data Access Flows
+    WebApp == Get Password ==> SM
+    WebApp == Scan/Put ==> DDB
+    WebApp == Connect ==> RDS_PG
+
+    %% Styling
+    style WebApp fill:#f9f,stroke:#333,stroke-width:2px
+    style RDS_PG fill:#3498db,stroke:#333,color:#fff
+    style DDB fill:#9b59b6,stroke:#333,color:#fff
+    style SM fill:#e67e22,stroke:#333,color:#fff
+    style IAM_Role fill:#f1c40f,stroke:#333
+    ```

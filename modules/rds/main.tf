@@ -29,7 +29,7 @@ resource "aws_db_instance" "postgres" {
   identifier        = "${var.rds_prefix}-db-pgres-ju"
   allocated_storage = 20
   engine            = "postgres"
-  engine_version    = "16.3"
+  engine_version    = "18"
   instance_class    = "db.t3.micro" # Free-tier eligible
   db_name           = "bookdb"
   username          = "adminuser"
@@ -46,13 +46,3 @@ resource "aws_db_instance" "postgres" {
     ignore_changes = [password]
   }
 }
-
-
-/* --root/main.tf
-module rds {
-   tags = local.common_tags
-   rds_prefix = local.prefix
-   vpc_id = module.network.vpc_id
-}
-
-*/

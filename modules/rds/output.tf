@@ -4,9 +4,11 @@ output "rds_endpoint" {
   value = aws_db_instance.postgres.endpoint
 }
 
+/*
 output "secret_value" {
   value = jsondecode(aws_secretsmanager_secret_version.db_secret_val.secret_string)["key1"]
 }
+*/
 
 output "db_secret_arn" {
   description = "The ARN of the Secrets Manager secret containing DB credentials"

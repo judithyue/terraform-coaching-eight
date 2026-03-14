@@ -47,8 +47,9 @@ output "dynamodb_table_name" {
   value = module.dynamodb.dynamodb_table_name
 }
 
-
+/*
 output "rds_secret_value" {
   value = module.rds.secret_value
   sensitive = true
 }
+*/
