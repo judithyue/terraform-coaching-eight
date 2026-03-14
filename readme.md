@@ -72,7 +72,7 @@ Root Configuration
 
 
 | SOURCE MODULE  | OUTPUT ATTRIBUTE          | DESTINATION MODULE | PURPOSE                                   |
-|-----------------------------------------------------------------+-------------------------------------------|
+|-------------------------------------------------------------------------------------------------------------|
 | VPC            | vpc_id                    | EC2 & RDS          | Attaches Security Groups to the VPC.      |
 | VPC            | public_subnet_ids         | EC2                | Deploys instances into public subnets.    |
 | VPC            | private_subnet_ids        | RDS                | Isolates the database in private subnets. |
